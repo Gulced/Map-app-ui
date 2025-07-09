@@ -1,0 +1,113 @@
+<div class="map-container">
+
+  <!-- SAĞ ÜST ANA MENÜ BAR (Ekle + Admin + Profil) -->
+  <div class="topbar-menu-container">
+    <app-menu (featureSelected)="onFeatureSelected($event)"></app-menu>
+    <button 
+      *ngIf="apiService.isAdmin()" 
+      (click)="goToAdmin()"
+      class="feature-menu-button btn-admin"
+      style="margin-left:8px;"
+    >
+      Kullanıcı Yönetimi
+    </button>
+    <div class="profile-dropdown-container">
+      <div class="profile-menu" (click)="toggleProfileDropdown()">
+        <span class="profile-icon">👤</span>
+        <span class="profile-name">Merhaba {{currentUser?.username}}</span>
+        <span class="dropdown-arrow">▼</span>
+      </div>
+      <div class="profile-dropdown" *ngIf="isProfileDropdownOpen">
+        <button (click)="openProfileModal()">Bilgilerimi Düzenle</button>
+        <button (click)="logout()">Çıkış Yap</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFİL MODALI -->
+  <div class="modal" *ngIf="isProfileModalOpen">
+    <div class="modal-content">
+      <h3>Bilgilerim</h3>
+      <form (ngSubmit)="saveProfile()">
+        <label>
+          Kullanıcı Adı:
+          <input [(ngModel)]="profileUsername" name="profileUsername" required />
+        </label>
+        <label>
+          E-posta:
+          <input [(ngModel)]="profileEmail" name="profileEmail" type="email" required />
+        </label>
+        <label>
+          Şifre:
+          <input [(ngModel)]="profilePassword" name="profilePassword" type="password" placeholder="Yeni şifre (değiştirmek için)" />
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="primary">Güncelle</button>
+          <button type="button" (click)="isProfileModalOpen=false">Kapat</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Çizim Kontrol Paneli -->
+  <div class="drawing-controls" *ngIf="isDrawingActive">
+    <span>{{ getDrawingModeText() }} Aktif</span>
+    <button *ngIf="etkilesimModu === 'add-area'" (click)="geriAlSonNokta()" class="btn-undo">Son Noktayı Geri Al</button>
+    <button (click)="tumEtkilesimleriDurdur()" class="btn-cancel-draw">İptal Et</button>
+  </div>
+
+  <!-- Harita bilgi göstergeleri (Zoom + Ölçek) -->
+  <div class="map-info-container">
+    <div class="zoom-indicator">
+      Zoom: {{ currentZoom?.toFixed(2) }}
+    </div>
+    <!-- Lejant (ScaleLine) bu div içine OpenLayers tarafından çizilecek -->
+    <div id="scale-line-container"></div>
+  </div>
+
+  <!-- Haritanın gösterileceği ana alan -->
+  <div id="map" class="map"></div>
+
+  <!-- BİRLEŞİK AKSİYON PANELİ -->
+  <div class="action-panel" *ngIf="activePanel" [ngClass]="getPanelClass()">
+    <div class="panel-header">
+      <h3>{{ getPanelTitle() }}</h3>
+      <button class="close-btn" (click)="closeActivePanel()">×</button>
+    </div>
+    <div class="panel-content">
+      <ng-container *ngIf="activePanel === 'info' && selectedFeatureInfo">
+        <p class="info-description">{{ selectedFeatureInfo.description }}</p>
+        <div class="info-actions">
+          <button class="btn-edit" (click)="editSelectedFeature()">Düzenle</button>
+          <button class="btn-delete" (click)="deleteSelectedFeature()">Sil</button>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="activePanel === 'add' || activePanel === 'edit'">
+        <div class="form-group">
+          <label for="nameInput">{{ isAreaMode() ? 'Alan' : 'Nokta' }} Adı:</label>
+          <input type="text" id="nameInput" [(ngModel)]="formName" name="nameInput" [placeholder]="isAreaMode() ? 'Örn: Evimin Bahçesi' : 'Örn: Buluşma Noktası'">
+        </div>
+        <div class="form-group">
+          <label for="descriptionInput">Açıklama:</label>
+          <textarea id="descriptionInput" [(ngModel)]="formDescription" name="descriptionInput" rows="3" [placeholder]="isAreaMode() ? 'Örn: Sulama yapılacak alan' : 'Örn: Kahve içilecek yer'"></textarea>
+        </div>
+      </ng-container>
+    </div>
+    <div class="panel-actions" *ngIf="activePanel !== 'info'">
+      <button class="btn-onayla" (click)="handleSave()">Kaydet</button>
+      <button class="btn-iptal" (click)="closeActivePanel()">İptal</button>
+    </div>
+  </div>
+
+  <!-- Sağ tık context menu -->
+  <div
+    *ngIf="contextMenuVisible"
+    class="custom-context-menu"
+    [style.left.px]="contextMenuX"
+    [style.top.px]="contextMenuY"
+    (contextmenu)="$event.preventDefault()"
+  >
+    <button (click)="onContextEdit()">Düzenle</button>
+    <button (click)="onContextDelete()">Sil</button>
+  </div>
+</div>

@@ -1,0 +1,140 @@
+<div *ngIf="apiService.isAdmin(); else notAllowed" class="admin-panel">
+  <div class="admin-header">
+    <h2>Kullanıcı Yönetimi</h2>
+    <button class="primary" (click)="goToMap()">Haritaya Dön</button>
+  </div>
+
+  <!-- ARAMA PANELİ -->
+  <form class="search-panel" (ngSubmit)="onSearch()">
+    <input
+      type="text"
+      placeholder="Kullanıcı adı veya e-posta ara"
+      [(ngModel)]="searchQuery"
+      name="query"
+      autocomplete="off"
+    />
+    <select [(ngModel)]="searchRole" name="role">
+      <option value="">Tüm Roller</option>
+      <option value="admin">Admin</option>
+      <option value="user">User</option>
+    </select>
+    <button type="submit" class="primary">Ara</button>
+  </form>
+  <!-- /ARAMA PANELİ -->
+
+  <div class="loading-spinner" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="table-wrapper" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th>Kullanıcı Adı</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>İşlemler</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers">
+          <td>{{user.username}}</td>
+          <td>{{user.email}}</td>
+          <td>
+            <span [ngClass]="{
+              'role-badge': true,
+              'admin-badge': user.role.toLowerCase() === 'admin',
+              'user-badge': user.role.toLowerCase() !== 'admin'
+            }">{{user.role}}</span>
+          </td>
+          <td>
+            <button class="edit" (click)="openEditModal(user)">Düzenle</button>
+            <button class="delete" (click)="openDeleteModal(user)">Sil</button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredUsers.length === 0">
+          <td colspan="4" class="no-data">Gösterilecek kullanıcı bulunamadı</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SAYFALAMA KONTROLLERI -->
+  <div class="pagination-controls" *ngIf="totalUsers > 0">
+    <div class="page-size-selector">
+      <span>Gösterilen:</span>
+      <select [(ngModel)]="pageSize" (change)="changePageSize()" name="pageSize">
+        <option [value]="5">5</option>
+        <option [value]="10">10</option>
+        <option [value]="20">20</option>
+        <option [value]="50">50</option>
+      </select>
+    </div>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button [disabled]="currentPage === 1" (click)="previousPage()">Önceki</button>
+      
+      <div class="page-numbers">
+        <ng-container *ngFor="let page of generatePageArray()">
+          <span *ngIf="page === -1" class="page-dots">...</span>
+          <button 
+            *ngIf="page !== -1"
+            [class.active]="currentPage === page"
+            (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </ng-container>
+      </div>
+      
+      <button [disabled]="currentPage === totalPages" (click)="nextPage()">Sonraki</button>
+    </div>
+  </div>
+  <!-- /SAYFALAMA KONTROLLERI -->
+
+  <!-- Edit Modal -->
+  <div class="modal" *ngIf="isEditModalOpen">
+    <div class="modal-content">
+      <h3>Kullanıcı Düzenle</h3>
+      <form (ngSubmit)="saveEdit()">
+        <label>
+          Kullanıcı Adı:
+          <input [(ngModel)]="editUsername" name="editUsername" required>
+        </label>
+        <label>
+          Email:
+          <input [(ngModel)]="editEmail" name="editEmail" type="email" required>
+        </label>
+        <label>
+          Rol:
+          <select [(ngModel)]="editRole" name="editRole">
+            <option value="ADMIN">Admin</option>
+            <option value="USER">User</option>
+          </select>
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="primary">Kaydet</button>
+          <button type="button" (click)="isEditModalOpen=false">İptal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal" *ngIf="isDeleteModalOpen">
+    <div class="modal-content">
+      <h3>Kullanıcı Sil</h3>
+      <p>Bu kullanıcıyı silmek istediğinize emin misiniz?</p>
+      <div class="modal-actions">
+        <button class="delete" (click)="confirmDelete()">Evet, Sil</button>
+        <button type="button" (click)="isDeleteModalOpen=false">Vazgeç</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #notAllowed>
+  <div class="not-allowed">
+    <span class="icon">🚫</span>
+    <p>Bu sayfaya erişim yetkiniz yok.</p>
+  </div>
+</ng-template>

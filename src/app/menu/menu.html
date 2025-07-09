@@ -1,0 +1,11 @@
+<div class="feature-menu">
+  <button (click)="toggleMenu()" class="feature-menu-button">Ekle</button>
+  <div class="feature-list" [class.show]="isMenuOpen">
+    <button class="feature-item" (click)="activateFeature('add-area')">
+      Alan Ekle
+    </button>
+    <button class="feature-item" (click)="activateFeature('add-point')">
+      Nokta Ekle
+    </button>
+  </div>
+</div>
